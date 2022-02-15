@@ -219,7 +219,7 @@ db.query(insert_stuff_table_sql, ['Thingamabob', '54321', 'Not to be confused wi
 
 ### Read the table (step 4/4)
 
-Finally, after populating the table with sample data, it would be nice to check out its contents. This is easily done with this statement (also in `/db/queries/init/read_stuff_table.sql`):
+Finally, after populating the table with sample data, it would be nice to check out its contents. This is easily done with this statement *(also in `/db/queries/init/read_stuff_table.sql`)*:
 ```sql
 SELECT * FROM stuff
 ```
