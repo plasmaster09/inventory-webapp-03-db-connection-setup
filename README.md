@@ -18,7 +18,7 @@ If you don't have a schema yet created for this application, create one now. We'
 CREATE SCHEMA stuff_manager;
 ```
 
-# Setting up a database connection with NodeJS's mysql library
+## (3.1) Setting up a database connection with NodeJS's mysql library
 
 > You may already have a preferred tool like MySQL Workbench to work with your database. You can, of course, use it to run any of the SQL queries in this tutorial, and to generally manage your database. But we also need our NodeJS app to make a connection to the database and send queries. Follow the instructions in this section to use NodeJS's `mysql` library to make a connection. 
 
@@ -67,7 +67,7 @@ then the variable `db` refers to the `connection` object from.
 
 > Even if multiple files in the Node project `require` the same module, the code in that module will only be run once per runtime. So, we can have multiple files utilize the same database connection that is set up only once. Neat!
 
-## Testing the connection
+## (3.2) Testing the connection
 
 Let's test out our connection configuration by actually sending a query to your database.
 
@@ -108,7 +108,7 @@ The concluding `end()` method closes the connection *after* all queued queries h
 > The [npm documentation for the `mysql` library](https://www.npmjs.com/package/mysql#introduction) has a similar introduction to its usage, plus more i-depth documentation.
 
 
-# Table initialization with `db_init.js`
+## (3.3) Table initialization with `db_init.js`
 
 Now that we've tested our database connection, let's use the connection to set up a "stuff" table for our web app's data! We'll write a short utility script called `db_init.js` that we can run at any time to (re-)initialize the table, including some sample data. 
 
@@ -125,7 +125,7 @@ This imports the configured connection from `db_connection.js`; since the two fi
 
 Next, we'll run a series of SQL statements. Each statement used is also in an `.sql` file in the subdirectory path `db/queries/init`.
 
-### Delete the existing table (step 1/4)
+### (3.3.1) Delete the existing table
 First, we want to run some SQL that deletes the table if it already exists. Add this code to `db_init.js`:
 ```js
 /**** Delete existing table, if any ****/
@@ -136,7 +136,7 @@ db.query(drop_stuff_table_sql);
 ```
 *(this query can be also found in `/db/queries/init/drop_stuff_table.sql`)*
 
-### Create the table  (step 2/4)
+### (3.3.2) Create the table
 
 Based on our prototypes, the app needs to manage records of "stuff" that could be stored in a table with the following columns:
 - **item** (short string)
@@ -172,7 +172,7 @@ const create_stuff_table_sql = `
 db.query(create_stuff_table_sql);
 ```
 
-### Populate the table (step 3/4)
+### (3.3.3) Populate the table
 
 Once the table is created, we'd like to add some sample data - at least the same two items in the prototypes. We *could* execute INSERT queries like these:
 
@@ -217,7 +217,7 @@ db.query(insert_stuff_table_sql, ['Thingamabob', '54321', 'Not to be confused wi
 
 > This technique also "escapes" the inserted values, helping protect against potential SQL injection attacks. This becomes more relevant when we're inserting user-provided values, but you can read the [relevant documentation](https://www.npmjs.com/package/mysql#escaping-query-values) if you like.
 
-### Read the table (step 4/4)
+### (3.3.4) Read the table
 
 Finally, after populating the table with sample data, it would be nice to check out its contents. This is easily done with this statement *(also in `/db/queries/init/read_stuff_table.sql`)*:
 ```sql
@@ -281,7 +281,7 @@ Table 'stuff' initialized with:
 ```
 
 > 
-### Optional (step 5): Read SQL files instead of using string literals
+### (3.3.5) Optional: Read SQL files instead of using string literals
 
 You might be a bit turned off by having SQL embedded as plain strings into our Javascript code. We did this for ease of usage and understanding, but you may prefer to keep the two kinds of languages separate and in their respective file types (`.js` and `.sql`). If so, we can change our code to instead read the SQL from the `.sql` files in the `/db/queries/init/` subdirectory. 
 
@@ -297,7 +297,7 @@ const read_stuff_table_sql = fs.readFileSync(__dirname + "/db/queries/init/read_
 This code snippet can also be found at the bottom of `db_init.js` as a large comment.
 
 
-# Protecting sensitive strings with environment variables and `dotenv`
+## (3.4) Protecting sensitive strings with environment variables and `dotenv`
 
 Before we can push any of our code to Github, we need to deal with the issue we raised early on: our database password (and other sensitive database information) is sitting in plaintext in `db_connection.js`. This is a clear security flaw, and publishing our code is out of the question until we deal with it.
 
@@ -357,7 +357,8 @@ Now, you can easily set your database configuration settings in the `.env` file 
 
 However, anyone making a clone or fork of your git repository will need to make their own `.env` file. Therefore, it is common to create a `.sample-env` file that contains the names of the relevant environment variables, but not the values. This can be safely shared with the rest of the project, and provide a starting point for a new `.env` file.
 
-# Conclusion:
+## (3.5) Conclusion:
+
 We've set up our data layer as a MySQL database, set up a connection from NodeJS, and wrote a initialization script that creates and populates the data table that our webapp will use.
 
 With the basics of all three layers in place, its finally time to connect them! Next, we'll transform our static prototypes into dynamic web pages, rendered by the app server from live data in the database.
