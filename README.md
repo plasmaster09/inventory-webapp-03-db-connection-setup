@@ -6,9 +6,11 @@ This tutorial follows after:
 
 > This tutorial assumes familiarity with basic SQL concepts and commands.
 
-Technologies: [MySQL](https://www.mysql.com/), [Node's `mysql` library](https://www.npmjs.com/package/mysql)
+Technologies: [MySQL](https://www.mysql.com/), [Node's `mysql2` library](https://www.npmjs.com/package/mysql2)
 
-The third layer of a web app is the **database**. In this tutorial, we will first use Node's `mysql` library to set up a connection to your MySQL database via Node. Then, we will create a table for the data of our web app, and write some queries to populate it with sample data. Later, this schema will be improved and expanded.
+> The NodeJS package [`mysql2`](https://www.npmjs.com/package/mysql2) is a slightly more modern successor to the original [`mysql` library](https://github.com/mysqljs/mysql#readme). The original `mysql` library can be used as well, but it only offers the `query()` method, not the `execute()` method which does true prepared statements. 
+
+The third layer of a web app is the **database**. In this tutorial, we will first use Node's `mysql2` library to set up a connection to your MySQL database via Node. Then, we will create a table for the data of our web app, and write some queries to populate it with sample data. Later, this schema will be improved and expanded.
 
 You will need access to a local or remote MySQL server, with permissions to create tables and make queries with a schema. Make sure you know your database's **hostname** and **port** (mostly likely 3306), and your **username** and **password**.
 
@@ -18,19 +20,19 @@ If you don't have a schema yet created for this application, create one now. We'
 CREATE SCHEMA stuff_manager;
 ```
 
-## (3.1) Setting up a database connection with NodeJS's mysql library
+## (3.1) Setting up a database connection with NodeJS's mysql2 library
 
-> You may already have a preferred tool like MySQL Workbench to work with your database. You can, of course, use it to run any of the SQL queries in this tutorial, and to generally manage your database. But we also need our NodeJS app to make a connection to the database and send queries. Follow the instructions in this section to use NodeJS's `mysql` library to make a connection. 
+> You may already have a preferred tool like MySQL Workbench to work with your database. You can, of course, use it to run any of the SQL queries in this tutorial, and to generally manage your database. But we also need our NodeJS app to make a connection to the database and send queries. Follow the instructions in this section to use NodeJS's `mysql2` library to make a connection. 
 
-First, we need to install `mysql` with npm. In the terminal, run this command:
+First, we need to install `mysql2` with npm. In the terminal, run this command:
 ```
-> npm install mysql
+> npm install mysql2
 ```
 
 Then, create a new subdirectory (folder) called `db` in the root directory of your webapp project. Add a new file to that subdirectory called `db_connection.js`. Put in the following code, replacing the `"<...>"` strings with the connection information for your database instance and schema.
 
 ```js
-const mysql = require('mysql');
+const mysql = require('mysql2');
 
 const dbConfig = {
     host: "<hostname>",
@@ -49,7 +51,7 @@ module.exports = connection;
 
 > **Plaintext passwords are bad!** Don't push your code to Github yet. We'll fix this security flaw at the end of this tutorial (or you can skip ahead to the bottom if it's really bothering you right now).
 
-This code prepares a database `connection`, configured by the settings in `dbConfig`. But simply creating the `connection` object doesn't actually *connect* to the database yet - that  happens once we actually make queries.
+This code prepares a database `connection`, configured by the settings in `dbConfig`. But simply creating the `connection` object doesn't actually *connect* to the database yet - that  happens once we actually execute queries.
 
 Since no actual querying happens in this file, it isn't meant to be run on its own (try running `> node db_connection.js` and you'll be disappointed). Rather, this is meant to be used as a **module** that can be imported into other parts of the project. Note the last line:
 
@@ -69,7 +71,7 @@ then the variable `db` refers to the `connection` object from.
 
 ## (3.2) Testing the connection
 
-Let's test out our connection configuration by actually sending a query to your database.
+Let's test out our connection configuration by actually sending a query to your database to execute.
 
 Make another file in the `db` folder called `db_test.js`, with this code inside:
 
@@ -77,7 +79,7 @@ Make another file in the `db` folder called `db_test.js`, with this code inside:
 const db = require("./db_connection");
 
 // Add query request 
-db.query('SELECT 1 + 1 AS solution', 
+db.execute('SELECT 1 + 1 AS solution', 
     (error, results) => {
         if (error)
             throw error;
@@ -99,20 +101,20 @@ If you see an error message, double check in `db_connection.js` that the `dbConf
 Solution: 2
 ```
 
-This demonstrates the basic usage of the `query()` method: the first parameter is an SQL statement to be executed, and its last (optional) parameter is a **callback function** that handles the eventual results (or error). For a SELECT statement, the results always come back as an array of RowDataPacket objects, who have properties matching the names of the selected columns. (The results of other kinds of statements will have different formats and information). 
+This demonstrates the basic usage of the `execute()` method: the first parameter is an SQL statement to be executed, and its last (optional) parameter is a **callback function** that handles the eventual results (or error). For a SELECT statement, the results always come back as an array of RowDataPacket objects, who have properties matching the names of the selected columns. (The results of other kinds of statements will have different formats and information). 
 
 The concluding `end()` method closes the connection *after* all queued queries have been executed and handled. Without this statement, the connection remains open and the program does not terminate.
 
-> Note that `query` and `end` (and all other `mysql` connection methods) are *asynchronous* operations: calling them queues a *future* operation, but they do not block. Try adding `console.log()` statements  after both of the `query` and `end` method calls to see what order things happen in. 
+> Note that `execute` and `end` (and all other connection methods) are *asynchronous* operations: calling them queues a *future* operation, but they do not block. Try adding `console.log()` statements  after both of the `execute` and `end` method calls to see what order things happen in. 
 
-> The [npm documentation for the `mysql` library](https://www.npmjs.com/package/mysql#introduction) has a similar introduction to its usage, plus more i-depth documentation.
+> The [npm documentation for the original `mysql` library](https://github.com/mysqljs/mysql#readme) has a similar introduction to its usage, plus more in-depth documentation. Even though we're using `mysql2`, the ideas as the same.
 
 
 ## (3.3) Table initialization with `db_init.js`
 
 Now that we've tested our database connection, let's use the connection to set up a "stuff" table for our web app's data! We'll write a short utility script called `db_init.js` that we can run at any time to (re-)initialize the table, including some sample data. 
 
-> Of course, you can also set up such a table using any tool that can run SQL like MySQL Workbench. But writing a Node-based script will be convenient, and also good practice with the `mysql` module.
+> Of course, you can also set up such a table using any tool that can run SQL like MySQL Workbench. But writing a Node-based script will be convenient, and also good practice with the `mysql2` module.
 
 Create a new file in the `db` folder called `db_init.js`, and add this code to start:
 
@@ -132,7 +134,7 @@ First, we want to run some SQL that deletes the table if it already exists. Add 
 
 const drop_stuff_table_sql = "DROP TABLE IF EXISTS `stuff`;"
 
-db.query(drop_stuff_table_sql);
+db.execute(drop_stuff_table_sql);
 ```
 *(this query can be also found in `/db/queries/init/drop_stuff_table.sql`)*
 
@@ -169,7 +171,7 @@ const create_stuff_table_sql = `
         PRIMARY KEY (id)
     );
 `
-db.query(create_stuff_table_sql);
+db.execute(create_stuff_table_sql);
 ```
 
 ### (3.3.3) Populate the table
@@ -188,8 +190,18 @@ VALUES
     ('Gizmos', '100', null);
 ```
 
-However, both have the same overall pattern, and the only differences are the three values being inserted. Instead, we can write the general pattern *(also in `/db/queries/init/insert_stuff_table.sql`)*, and add it to the code like this  :
+However, both have the same overall pattern, and the only differences are the three values being inserted. Instead, we can write a more general query with question mark placeholders (`?`) for values *(also in `/db/queries/init/insert_stuff_table.sql`)*:
 
+```sql
+INSERT INTO stuff 
+    (item, quantity, description) 
+VALUES 
+    (?, ?, ?);
+```
+
+The `execute()` method then offers a handy way to replace those `?` placeholds with actual values before executing: simply pass an array of values as the optional second parameter, and each value will be used to replace a `?`. This is a technique called "prepared statements".
+
+Add this code to insert some rows using this technique:
 ```js
 /**** Create some sample items ****/
 
@@ -199,23 +211,16 @@ const insert_stuff_table_sql = `
     VALUES 
         (?, ?, ?);
 `
+db.execute(insert_stuff_table_sql, ['Widgets', '5', 'Widgets are cool! You can do ... so many... different things... with them...']);
+
+db.execute(insert_stuff_table_sql, ['Gizmos', '100', null]);
+
+db.execute(insert_stuff_table_sql, ['Thingamajig', '12345', 'Not to be confused with a Thingamabob']);
+
+db.execute(insert_stuff_table_sql, ['Thingamabob', '54321', 'Not to be confused with a Thingamajig']);
 ```
 
-The `query()` method then offers a handy way to replace those `?` question marks with actual values before executing: simply pass an array of values as the optional second parameter, and each value will be used to replace a `?`. 
-
-Add this code to insert some rows using this technique:
-
-```js
-db.query(insert_stuff_table_sql, ['Widgets', '5', 'Widgets are cool! You can do ... so many... different things... with them...']);
-
-db.query(insert_stuff_table_sql, ['Gizmos', '100', null]);
-
-db.query(insert_stuff_table_sql, ['Thingamajig', '12345', 'Not to be confused with a Thingamabob']);
-
-db.query(insert_stuff_table_sql, ['Thingamabob', '54321', 'Not to be confused with a Thingamajig']);
-```
-
-> This technique also "escapes" the inserted values, helping protect against potential SQL injection attacks. This becomes more relevant when we're inserting user-provided values, but you can read the [relevant documentation](https://www.npmjs.com/package/mysql#escaping-query-values) if you like.
+> Using prepared statements helps protect against potential SQL injection attacks. This becomes more relevant when we're inserting user-provided values, but you can read more here if you like: https://stackoverflow.com/questions/8263371/how-can-prepared-statements-protect-from-sql-injection-attacks
 
 ### (3.3.4) Read the table
 
@@ -231,7 +236,7 @@ As we did in the `db_test.js`, let's make the query and provide a callback funct
 
 const read_stuff_table_sql = "SELECT * FROM stuff";
 
-db.query(read_stuff_table_sql, 
+db.execute(read_stuff_table_sql, 
     (error, results) => {
         if (error) 
             throw error;
@@ -361,4 +366,4 @@ However, anyone making a clone or fork of your git repository will need to make 
 
 We've set up our data layer as a MySQL database, set up a connection from NodeJS, and wrote a initialization script that creates and populates the data table that our webapp will use.
 
-With the basics of all three layers in place, its finally time to connect them! Next, we'll transform our static prototypes into dynamic web pages, rendered by the app server from live data in the database.
+With the basics of all three layers in place, it's finally time to connect them! Next, we'll transform our static prototypes into dynamic web pages, rendered by the app server from live data in the database.
