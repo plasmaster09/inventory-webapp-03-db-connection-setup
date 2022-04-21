@@ -46,7 +46,6 @@ const dbConfig = {
 const connection = mysql.createConnection(dbConfig);
 
 module.exports = connection;
-
 ```
 
 > **Plaintext passwords are bad!** Don't push your code to Github yet. We'll fix this security flaw at the end of this tutorial (or you can skip ahead to the bottom if it's really bothering you right now).
@@ -65,7 +64,7 @@ This means that if another file uses `require()` like this:
 const db = require('<./relative/path/to/db_connection>');
 ```
 
-then the variable `db` refers to the `connection` object from. 
+then the variable `db` refers to the `connection` object from `db_connection.js`. 
 
 > Even if multiple files in the Node project `require` the same module, the code in that module will only be run once per runtime. So, we can have multiple files utilize the same database connection that is set up only once. Neat!
 
@@ -103,12 +102,11 @@ Solution: 2
 
 This demonstrates the basic usage of the `execute()` method: the first parameter is an SQL statement to be executed, and its last (optional) parameter is a **callback function** that handles the eventual results (or error). For a SELECT statement, the results always come back as an array of RowDataPacket objects, who have properties matching the names of the selected columns. (The results of other kinds of statements will have different formats and information). 
 
-The concluding `end()` method closes the connection *after* all queued queries have been executed and handled. Without this statement, the connection remains open and the program does not terminate.
+The concluding `end()` method closes the connection *after* all queued queries have been executed and handled. Without this statement, the connection remains open and the program does not terminate automatically (you can still, of course, manually terminate with `Ctrl-C`).
 
 > Note that `execute` and `end` (and all other connection methods) are *asynchronous* operations: calling them queues a *future* operation, but they do not block. Try adding `console.log()` statements  after both of the `execute` and `end` method calls to see what order things happen in. 
 
-> The [npm documentation for the original `mysql` library](https://github.com/mysqljs/mysql#readme) has a similar introduction to its usage, plus more in-depth documentation. Even though we're using `mysql2`, the ideas as the same.
-
+> The [npm documentation for the original `mysql` library](https://github.com/mysqljs/mysql#readme) has a similar introduction to its usage, plus more in-depth documentation. Even though we're actually using `mysql2` library, the main ideas are the same.
 
 ## (3.3) Table initialization with `db_init.js`
 
@@ -125,7 +123,9 @@ const db = require("./db_connection");
 
 This imports the configured connection from `db_connection.js`; since the two files are in the same folder, the relative path for the require statement starts with `./`.
 
-Next, we'll run a series of SQL statements. Each statement used is also in an `.sql` file in the subdirectory path `db/queries/init`.
+Next, we'll write and run a series of SQL statements. 
+
+*Each statement we're about to write and use can be found in an `.sql` file in the subdirectory `db/queries/init`.*
 
 ### (3.3.1) Delete the existing table
 First, we want to run some SQL that deletes the table if it already exists. Add this code to `db_init.js`:
@@ -321,9 +321,9 @@ const dbConfig = {
 ```
 A few default options have been provided in case certain environment variables are not specified.
 
-However, dealing with environment variables is a bit of a hassle, especially if you have several Node projects that use them. 
+However, dealing with environment variables is a bit of a hassle, especially if you have several different Node projects that use them. 
 
-A more convenient option is provided by the `dotenv` package, which sets project-specific values for environment variables from a text file called `.env`. 
+A more convenient option is provided by the `dotenv` package, which sets project-specific values for environment variables from a local text file called `.env`. 
 
 Install it with this command:
 
@@ -360,10 +360,10 @@ Finally, add to your `.gitignore` the line:
 
 Now, you can easily set your database configuration settings in the `.env` file without worrying about exposing it via Github. 
 
-However, anyone making a clone or fork of your git repository will need to make their own `.env` file. Therefore, it is common to create a `.sample-env` file that contains the names of the relevant environment variables, but not the values. This can be safely shared with the rest of the project, and provide a starting point for a new `.env` file.
+However, anyone cloning or forking of your git repository will need to make their own `.env` file. Therefore, it is common to create a `.sample-env` file that contains the names of the relevant environment variables, but not the values. This can be safely shared with the rest of the project, and provide a starting point for a new `.env` file.
 
 ## (3.5) Conclusion:
 
 We've set up our data layer as a MySQL database, set up a connection from NodeJS, and wrote a initialization script that creates and populates the data table that our webapp will use.
 
-With the basics of all three layers in place, it's finally time to connect them! Next, we'll transform our static prototypes into dynamic web pages, rendered by the app server from live data in the database.
+With the basics of all three layers in place, it's finally time to connect them! Next, we'll transform our static prototypes into dynamic web pages, rendered by the app server from live data stored in the database.
