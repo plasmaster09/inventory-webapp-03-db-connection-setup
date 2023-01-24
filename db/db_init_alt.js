@@ -1,24 +1,13 @@
-// (Re)Sets up the database, including a little bit of sample data
+// Refreshes up the database, including a little bit of sample data
 const db = require("./db_connection");
 
-/**** Drop existing table, if any ****/
+/**** This version of the file assumes the table already exists ****/
 
-const drop_stuff_table_sql = "DROP TABLE IF EXISTS stuff;"
+/**** Delete *CONTENTS OF* existing table (but not table itself) ****/
 
-db.execute(drop_stuff_table_sql);
+const delete_stuff_table_sql = "DELETE FROM stuff;"
 
-/**** Create "stuff" table (again)  ****/
-
-const create_stuff_table_sql = `
-    CREATE TABLE stuff (
-        id INT NOT NULL AUTO_INCREMENT,
-        item VARCHAR(45) NOT NULL,
-        quantity INT NOT NULL,
-        description VARCHAR(150) NULL,
-        PRIMARY KEY (id)
-    );
-`
-db.execute(create_stuff_table_sql);
+db.execute(delete_stuff_table_sql);
 
 /**** Create some sample items ****/
 
@@ -59,7 +48,7 @@ db.end();
 // Put this code at the top, and remove all the SQL string literals defined through the file.
 const fs = require("fs");
 
-const drop_stuff_table_sql = fs.readFileSync(__dirname + "/db/queries/init/drop_stuff_table.sql", { encoding: "UTF-8" });
+const delete_stuff_table_sql = fs.readFileSync(__dirname + "/db/queries/init/delete_stuff_table.sql", { encoding: "UTF-8" });
 const create_stuff_table_sql = fs.readFileSync(__dirname + "/db/queries/init/create_stuff_table.sql", { encoding: "UTF-8" });
 const insert_stuff_table_sql = fs.readFileSync(__dirname + "/db/queries/init/insert_stuff_table.sql", { encoding: "UTF-8" });
 const read_stuff_table_sql = fs.readFileSync(__dirname + "/db/queries/init/read_stuff_table.sql", { encoding: "UTF-8" });

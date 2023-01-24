@@ -112,7 +112,9 @@ The concluding `end()` method closes the connection *after* all queued queries h
 
 Now that we've tested our database connection, let's use the connection to set up a "stuff" table for our web app's data! We'll write a short utility script called `db_init.js` that we can run at any time to (re-)initialize the table, including some sample data. 
 
-> Of course, you can also set up such a table using any tool that can run SQL like MySQL Workbench. But writing a Node-based script will be convenient, and also good practice with the `mysql2` module.
+> Of course, you can also set up such a table using any tool that can run SQL like MySQL Workbench. If you don't have such a tool, you should get one - its very useful for directly working with SQL scripts and database management.
+> 
+> However, having a Node-based script will be convenient, and also good practice with the `mysql2` module.
 
 Create a new file in the `db` folder called `db_init.js`, and add this code to start:
 
@@ -124,6 +126,9 @@ const db = require("./db_connection");
 This imports the configured connection from `db_connection.js`; since the two files are in the same folder, the relative path for the require statement starts with `./`.
 
 Next, we'll write and run a series of SQL statements. 
+
+>
+> If you've already designed your database elsewhere, skip steps 3.3.1 and 3.3.2, and start from step 3.3.2b instead.
 
 *Each statement we're about to write and use can be found in an `.sql` file in the subdirectory `db/queries/init`.*
 
@@ -173,6 +178,22 @@ const create_stuff_table_sql = `
 `
 db.execute(create_stuff_table_sql);
 ```
+
+### (3.3.2b) Alternative: Delete table's data instead of drop/create
+
+If you already have a database with a table suitably designed (perhaps through MySQLWorkbench or another database management tool), you may prefer to simply delete table's *data*, not drop the entire table itself and re-create it. 
+
+If you prefer that approach, replace the code of the first two steps with this:
+
+```js
+/**** Delete *CONTENTS OF* existing table (but not table itself) ****/
+
+const delete_stuff_table_sql = "DELETE FROM stuff;"
+
+db.execute(delete_stuff_table_sql);
+```
+
+You can find this version of the code (and the rest of the steps below) in the file `db/db_init_alt.js`.
 
 ### (3.3.3) Populate the table
 
@@ -300,6 +321,7 @@ const insert_stuff_table_sql = fs.readFileSync(__dirname + "/db/queries/init/ins
 const read_stuff_table_sql = fs.readFileSync(__dirname + "/db/queries/init/read_stuff_table.sql", { encoding: "UTF-8" })
 ```
 This code snippet can also be found at the bottom of `db_init.js` as a large comment.
+
 
 
 ## (3.4) Protecting sensitive strings with environment variables and `dotenv`
