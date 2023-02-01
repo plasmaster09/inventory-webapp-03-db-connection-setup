@@ -1,11 +1,11 @@
 form {
-    border: solid 2px lightgrey;
+    border: solid 2px cyan;
     padding: 10px;
     border-radius: 5px;
 }
 
 form:focus-within {
-    border-color: orange;
+    border-color: pink;
 }
 
 tr:hover {
